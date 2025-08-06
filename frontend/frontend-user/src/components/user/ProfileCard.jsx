@@ -1,14 +1,39 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import toast from "react-hot-toast";
+import FormDialog from "../common/FormDialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
+import { useUpdateProfile } from "@/hooks/mutations/useUpdateProfile";
+import EditProfileFormFields from "./profile/EditProfileFormFields";
 
 const ProfileCard = ({ user }) => {
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: user.name,
+    email: user.email,
+  });
+
+  const { mutate } = useUpdateProfile();
+
+  const handleSubmit = ({ formData }) => {
+    mutate(formData, {
+      onSuccess: (data) => {
+        toast.success("Profile updated:", data);
+        setOpen(false);
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || "Something went wrong");
+      },
+    });
+  };
+
   return (
     <Card className="p-6">
       <figure>
-        {/* Your existing SVG background */}
-        {/* <svg className="w-full h-40" ...>...</svg> */}
-         <svg
+        <svg
           className="w-full h-40"
           preserveAspectRatio="none"
           viewBox="0 0 1113 161"
@@ -43,37 +68,22 @@ const ProfileCard = ({ user }) => {
             src={user.avatarUrl}
             alt={user.name}
           />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute bottom-0 right-0 p-1 rounded-full border bg-white dark:bg-neutral-800"
-            title="Set status"
-          >
-            <svg
-              className="w-6 h-6 text-gray-600 dark:text-neutral-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-              <line x1="9" x2="9.01" y1="9" y2="9" />
-              <line x1="15" x2="15.01" y1="9" y2="9" />
-            </svg>
-          </Button>
         </div>
 
         {/* User Info */}
         <div className="text-center mt-4">
-          <h1 className="text-xl font-semibold dark:text-neutral-200">{user.name}</h1>
-          <p className="text-sm text-gray-500 dark:text-neutral-400">{user.username}</p>
+          <h1 className="text-xl font-semibold dark:text-neutral-200">
+            {user.name}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-neutral-400">
+            {user.email}
+          </p>
         </div>
       </div>
 
       {/* Action Buttons and Tabs */}
       <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
           Edit
         </Button>
 
@@ -86,8 +96,19 @@ const ProfileCard = ({ user }) => {
           </TabsList>
         </Tabs>
       </div>
-    </Card>
-  )
-}
+      <FormDialog
+        title="Edit Profile"
+        open={open}
+        setOpen={setOpen}
+        triggerLabel="Edit"
+        formData={formData}
+        onSubmit={handleSubmit}
+      >
+        <EditProfileFormFields formData={formData} setFormData={setFormData} />
 
-export default ProfileCard
+      </FormDialog>
+    </Card>
+  );
+};
+
+export default ProfileCard;
